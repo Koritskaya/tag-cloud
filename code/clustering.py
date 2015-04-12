@@ -8,23 +8,9 @@ import numpy as np
 import nltk.data
 
 class MySentences(object):
-     def __init__(self, dirname):
-         self.dirname = dirname
+    def __init__(self, dirname):
+        self.dirname = dirname
 
-     def __iter__(self):
-         for fname in os.listdir(self.dirname):
-             for line in open(os.path.join(self.dirname, fname)):
-                 yield line.split()
-
-def read_corpus_word2vec():
-    '''
-    Read all files in collection and return the word to vector model
-    '''
-    info = read_info() # [[doc_path, president, title, data],...]
-    NUM_DOCS = len(info) # get number of docs
-    vocab = dict() # a list for the vocabulary
-    thisList = list() # a list of document tf vectors
-    indDict = 0
     '''
     This tokenizer divides a text into a list of sentences,
     by using an unsupervised algorithm to build a model for
@@ -34,6 +20,17 @@ def read_corpus_word2vec():
 
     The NLTK data package includes
     a pre-trained Punkt tokenizer for English.
+    '''
+
+    def __iter__(self):
+        sent_detector = nltk.data.load('tokenizers/punkt/english.pickle')
+        for fname in os.listdir(self.dirname):
+            text = open(os.path.join(self.dirname, fname)).read()
+            yield sent_detector.tokenize(text.strip())
+
+def read_corpus_word2vec():
+    '''
+    Read all files in collection and return the word to vector model
     '''
     sent_detector = nltk.data.load('tokenizers/punkt/english.pickle')
     sentences = MySentences('../data_clean/')
