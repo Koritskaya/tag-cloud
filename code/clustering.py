@@ -1,43 +1,16 @@
 __author__ = 'kolenka'
 
-
 import utils
+import gensim
+import sklearn
 from gensim.models import Word2Vec
 from sklearn.cluster import KMeans
 import numpy as np
+import os
 import nltk.data
+import sys
 
-class MySentences(object):
-    def __init__(self, dirname):
-        self.dirname = dirname
-
-    '''
-    This tokenizer divides a text into a list of sentences,
-    by using an unsupervised algorithm to build a model for
-    abbreviation words, collocations, and words that start
-    sentences. It must be trained on a large collection of
-    plaintext in the target language before it can be used.
-
-    The NLTK data package includes
-    a pre-trained Punkt tokenizer for English.
-    '''
-
-    def __iter__(self):
-        sent_detector = nltk.data.load('tokenizers/punkt/english.pickle')
-        for fname in os.listdir(self.dirname):
-            text = open(os.path.join(self.dirname, fname)).read()
-            yield sent_detector.tokenize(text.strip())
-
-def read_corpus_word2vec():
-    '''
-    Read all files in collection and return the word to vector model
-    '''
-    sent_detector = nltk.data.load('tokenizers/punkt/english.pickle')
-    sentences = MySentences('../data_clean/')
-    word2vecModel = gensim.models.Word2Vec(sentences)
-
-    return word2vecModel
-
+import utils_word2vec
 
 # Define a function to create bags of centroids and bags of cluster centers
 
@@ -66,13 +39,12 @@ def create_bag_of_centroids( wordlist, word_centroid_map, centroid_word_map ):
 def run_clustering(tags):
     # vector of tags acheaved from other models
     # tags = ['muslim','holy']
-
-    model = read_corpus_word2vec()
-
-    # Set "k" (num_clusters) to be 1/5th of the vocabulary size, or an
-    # average of 5 words per cluster
+    print "Reading word2vec model"
+    model = utils_word2vec.read_word2vec()
     word_vectors = model.syn0
-    num_clusters = 2*tags.shape[0] - 1
+    num_clusters = 2*len(tags) - 1
+
+    print  model.most_similar('iraq')
 
     # Initalize a k-means object and use it to extract centroids
     print "Running K means"
@@ -85,10 +57,15 @@ def run_clustering(tags):
     # a cluster number
     word_centroid_map = dict(zip( model.index2word, idx ))
 
+
     clusterDist = kmeans_clustering.transform( word_vectors )
+    print clusterDist.shape
     cluster_tags = []
     for i in range(0,num_clusters - 1):
         cluster_tags.append(model.index2word[np.argmax(clusterDist[:,i])])
+        mymax = np.argmax(clusterDist[:,i])
+#        print np.argmax(clusterDist[:,i])
+#        print "word" + model.index2word[mymax]
 
     centroid_word_map = dict(zip(centers, cluster_tags ))
 
